@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>GPE Translator</h1>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="moon-icon">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sun-icon">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="content">
+      <div class="language-selector">
+        <select id="sourceLanguage" class="language-select">
+          <option value="en">English</option>
+          <option value="zh">Chinese</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+        </select>
+        <div class="swap-icon" id="swapLanguages">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 16V4m0 0L3 8m4-4l4 4"></path>
+            <path d="M17 8v12m0 0l4-4m-4 4l-4-4"></path>
+          </svg>
+        </div>
+        <select id="targetLanguage" class="language-select">
+          <option value="en">English</option>
+          <option value="zh" selected>Chinese</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+        </select>
+      </div>
+
+      <form id="translationForm">
+        <textarea id="sourceText" class="search-bar" placeholder="Enter text to translate..."></textarea>
+        <button type="submit" class="button2">Translate</button>
+      </form>
+
+      <div id="translationResult" class="response-box" style="display: none;">
+        <p id="loadingPlaceholder" class="placeholder-glow" style="display: none;">
+          <span class="loading-spinner"></span><span class="loading-dots">Translating</span>
+        </p>
+        <p id="actualResponse" style="display: none;"></p>
+      </div>
+      <!-- Add this after your existing content div -->
+      <div id="translationModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <span class="close-button">&times;</span>
+          <h2>Translation Complete</h2>
+          <p>Your text has been translated successfully!</p>
+        </div>
+</div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
