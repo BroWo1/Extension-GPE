@@ -123,10 +123,7 @@ function closeModal(modalId) {
   document.getElementById(modalId).style.display = 'none';
 }
 
-// Update your existing code in popup.js
-document.addEventListener('DOMContentLoaded', function() {
-  // Add this after existing DOM content loaded code
-  const modal = document.getElementById('translationModal');
+const modal = document.getElementById('translationModal');
   const closeButton = modal.querySelector('.close-button');
 
   closeButton.addEventListener('click', function() {
@@ -163,5 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
       actualResponse.textContent = `Error: ${error.message}`;
     });
   });
-});
+  // content.js
+
+
 });
