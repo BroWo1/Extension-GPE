@@ -1,4 +1,70 @@
-document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function() {
+  // Get DOM elements
+  const iconFunction = document.getElementById('iconFunction');
+  const saveFunction = document.getElementById('saveFunction');
+  const translateOptions = document.getElementById('translateOptions');
+  const searchOptions = document.getElementById('searchOptions');
+
+  // Load saved function preference
+  chrome.storage.sync.get('iconFunction', function(data) {
+    if (data.iconFunction) {
+      iconFunction.value = data.iconFunction;
+      showRelevantOptions(data.iconFunction);
+    }
+  });
+
+  // Function selection change handler
+  iconFunction.addEventListener('change', function() {
+    showRelevantOptions(this.value);
+  });
+
+  // Show only relevant options based on selected function
+  function showRelevantOptions(functionType) {
+    // Hide all option sections first
+    const allOptions = document.querySelectorAll('.function-options');
+    allOptions.forEach(option => option.style.display = 'none');
+
+    // Show relevant section
+    if (functionType === 'translate') {
+      translateOptions.style.display = 'block';
+    } else if (functionType === 'search') {
+      searchOptions.style.display = 'block';
+    }
+  }
+
+  // Save preferences
+  saveFunction.addEventListener('click', function() {
+    const selectedFunction = iconFunction.value;
+
+    // Save main function preference
+    chrome.storage.sync.set({'iconFunction': selectedFunction}, function() {
+      console.log('Icon function saved: ' + selectedFunction);
+    });
+
+    // Save specific settings based on function
+    if (selectedFunction === 'translate') {
+      chrome.storage.sync.set({
+        'sourceLanguage': document.getElementById('sourceLanguage').value,
+        'targetLanguage': document.getElementById('targetLanguage').value
+      });
+    } else if (selectedFunction === 'search') {
+      chrome.storage.sync.set({
+        'searchEngine': document.getElementById('searchEngine').value
+      });
+    }
+
+    // Show feedback
+    const feedback = document.createElement('div');
+    feedback.textContent = 'Preferences saved!';
+    feedback.style.color = '#10a37f';
+    feedback.style.marginTop = '10px';
+    feedback.style.textAlign = 'center';
+    this.parentNode.appendChild(feedback);
+
+    setTimeout(() => {
+      feedback.remove();
+    }, 2000);
+  });
   // Check for any selected text in storage
   chrome.storage.local.get(['selectedText'], function(result) {
     if (result.selectedText) {

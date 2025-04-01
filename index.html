@@ -27,48 +27,75 @@
     </div>
 
     <div class="content">
-      <div class="language-selector">
-        <select id="sourceLanguage" class="language-select">
-          <option value="en">English</option>
-          <option value="zh">Chinese</option>
-          <option value="es">Spanish</option>
-          <option value="fr">French</option>
-          <option value="de">German</option>
+      <div class="mode-selector">
+        <h2>Icon Click Action</h2>
+        <select id="iconFunction" class="function-select">
+          <option value="translate" selected>Translate Text</option>
+          <option value="copy">Copy to Clipboard</option>
+          <option value="search">Search on Google</option>
+          <option value="define">Define Term</option>
+          <option value="speak">Text to Speech</option>
         </select>
-        <div class="swap-icon" id="swapLanguages">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7 16V4m0 0L3 8m4-4l4 4"></path>
-            <path d="M17 8v12m0 0l4-4m-4 4l-4-4"></path>
-          </svg>
+        <button id="saveFunction" class="button2">Save Preference</button>
+      </div>
+
+      <div id="translateOptions" class="function-options">
+        <h3>Translation Settings</h3>
+        <div class="language-selector">
+          <select id="sourceLanguage" class="language-select">
+            <option value="en">English</option>
+            <option value="zh">Chinese</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+          </select>
+          <div class="swap-icon" id="swapLanguages">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 16V4m0 0L3 8m4-4l4 4"></path>
+              <path d="M17 8v12m0 0l4-4m-4 4l-4-4"></path>
+            </svg>
+          </div>
+          <select id="targetLanguage" class="language-select">
+            <option value="en">English</option>
+            <option value="zh" selected>Chinese</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+          </select>
         </div>
-        <select id="targetLanguage" class="language-select">
-          <option value="en">English</option>
-          <option value="zh" selected>Chinese</option>
-          <option value="es">Spanish</option>
-          <option value="fr">French</option>
-          <option value="de">German</option>
+      </div>
+
+      <div id="searchOptions" class="function-options" style="display: none;">
+        <h3>Search Settings</h3>
+        <select id="searchEngine" class="search-select">
+          <option value="google">Google</option>
+          <option value="bing">Bing</option>
+          <option value="duckduckgo">DuckDuckGo</option>
         </select>
       </div>
 
-      <form id="translationForm">
-        <textarea id="sourceText" class="search-bar" placeholder="Enter text to translate..."></textarea>
-        <button type="submit" class="button2">Translate</button>
-      </form>
+      <div id="testSection">
+        <h3>Test Translation</h3>
+        <form id="translationForm">
+          <textarea id="sourceText" class="search-bar" placeholder="Enter text to translate..."></textarea>
+          <button type="submit" class="button2">Translate</button>
+        </form>
 
-      <div id="translationResult" class="response-box" style="display: none;">
-        <p id="loadingPlaceholder" class="placeholder-glow" style="display: none;">
-          <span class="loading-spinner"></span><span class="loading-dots">Translating</span>
-        </p>
-        <p id="actualResponse" style="display: none;"></p>
+        <div id="translationResult" class="response-box" style="display: none;">
+          <p id="loadingPlaceholder" class="placeholder-glow" style="display: none;">
+            <span class="loading-spinner"></span><span class="loading-dots">Translating</span>
+          </p>
+          <p id="actualResponse" style="display: none;"></p>
+        </div>
       </div>
-      <!-- Add this after your existing content div -->
+
       <div id="translationModal" class="modal" style="display: none;">
         <div class="modal-content">
           <span class="close-button">&times;</span>
           <h2>Translation Complete</h2>
           <p>Your text has been translated successfully!</p>
         </div>
-</div>
+      </div>
     </div>
   </div>
   <script src="popup.js"></script>

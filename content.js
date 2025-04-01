@@ -171,48 +171,134 @@ translationPopup.querySelector('.gpe-close-button').addEventListener('click', fu
   translationPopup.style.display = 'none';
 });
 
-// Handle translation icon click
+/// Add to content.js - replace the translation icon click handler
+
 translationIcon.addEventListener('click', function(event) {
   // Stop event from bubbling up to document
   event.stopPropagation();
   event.preventDefault();
 
-  // Get selected text *again* directly from window selection
+  // Get selected text again from window selection
   const selectedText = window.getSelection().toString().trim();
   if (!selectedText) {
-      console.log('Translation icon clicked, but no text selected.');
-      translationIcon.style.display = 'none'; // Hide icon if selection lost
-      return;
+    console.log('Translation icon clicked, but no text selected.');
+    translationIcon.style.display = 'none';
+    return;
   }
 
-  console.log('Translation icon clicked with text:', selectedText);
+  // Get the user's preferred function
+  chrome.storage.sync.get(['iconFunction', 'sourceLanguage', 'targetLanguage', 'searchEngine'],
+    function(data) {
+      const action = data.iconFunction || 'translate';
 
-  // Position and show the popup relative to the icon
+      switch(action) {
+        case 'translate':
+          showTranslationPopup(selectedText, data.sourceLanguage || 'auto', data.targetLanguage || 'en');
+          break;
+        case 'copy':
+          copyToClipboard(selectedText);
+          break;
+        case 'search':
+          searchWeb(selectedText, data.searchEngine || 'google');
+          break;
+        case 'define':
+          defineText(selectedText);
+          break;
+        case 'speak':
+          speakText(selectedText);
+          break;
+        default:
+          showTranslationPopup(selectedText);
+      }
+    }
+  );
+
+  // Hide the translate icon
+  fadeOutIcon();
+});
+
+// New helper functions
+function showTranslationPopup(text, sourceLang = 'auto', targetLang = 'en') {
+  // Your existing translation popup code
   translationPopup.style.display = 'block';
-  translationPopup.style.top = translationIcon.style.top; // Use icon's position
-  translationPopup.style.left = translationIcon.style.left; // Use icon's position
+  translationPopup.style.top = translationIcon.style.top;
+  translationPopup.style.left = translationIcon.style.left;
 
-  // Show loading indicator
   const loadingElement = translationPopup.querySelector('.gpe-loading');
   const resultElement = translationPopup.querySelector('.gpe-result');
   loadingElement.style.display = 'block';
   resultElement.style.display = 'none';
 
-  // Perform translation
-  translateText(selectedText).then(translation => {
+  translateText(text, sourceLang, targetLang).then(translation => {
     loadingElement.style.display = 'none';
     resultElement.style.display = 'block';
     resultElement.textContent = translation;
   }).catch(error => {
-      console.error("Translation error:", error);
-      loadingElement.style.display = 'none';
-      resultElement.style.display = 'block';
-      resultElement.textContent = `Error: ${error.message || 'Translation failed'}`;
+    loadingElement.style.display = 'none';
+    resultElement.style.display = 'block';
+    resultElement.textContent = `Error: ${error.message || 'Translation failed'}`;
   });
+}
 
-  // Hide the translate icon after initiating translation
-  translationIcon.style.display = 'none';
-  fadeOutIcon();
-});
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showFeedbackToast('Copied to clipboard');
+  }).catch(err => {
+    showFeedbackToast('Failed to copy: ' + err);
+  });
+}
+
+function searchWeb(text, engine = 'google') {
+  const engines = {
+    google: 'https://www.google.com/search?q=',
+    bing: 'https://www.bing.com/search?q=',
+    duckduckgo: 'https://duckduckgo.com/?q='
+  };
+
+  const baseUrl = engines[engine] || engines.google;
+  window.open(baseUrl + encodeURIComponent(text), '_blank');
+}
+
+function defineText(text) {
+  window.open('https://www.merriam-webster.com/dictionary/' + encodeURIComponent(text), '_blank');
+}
+
+function speakText(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(utterance);
+  showFeedbackToast('Speaking text');
+}
+
+function showFeedbackToast(message) {
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.position = 'fixed';
+  toast.style.bottom = '20px';
+  toast.style.left = '50%';
+  toast.style.transform = 'translateX(-50%)';
+  toast.style.padding = '10px 20px';
+  toast.style.backgroundColor = 'var(--primary-color)';
+  toast.style.color = 'white';
+  toast.style.borderRadius = '4px';
+  toast.style.zIndex = '10002';
+  toast.style.opacity = '0';
+  toast.style.transition = 'opacity 0.3s ease';
+
+  document.body.appendChild(toast);
+
+  // Force reflow
+  toast.offsetHeight;
+
+  // Fade in
+  toast.style.opacity = '1';
+
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 3000);
+}
 
 console.log('GPE Translator content script loaded.'); // Log script loading
