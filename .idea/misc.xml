@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="D:\Users\zhang\anaconda3" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="D:\Users\zhang\anaconda3" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="pytorch" project-jdk-type="Python SDK" />
 </project>

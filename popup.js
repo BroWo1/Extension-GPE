@@ -160,7 +160,4 @@ const modal = document.getElementById('translationModal');
       actualResponse.textContent = `Error: ${error.message}`;
     });
   });
-  // content.js
-
-
 });

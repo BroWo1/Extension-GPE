@@ -12,5 +12,9 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"]
     }
-  ]
+  ],
+  "web_accessible_resources": [{
+  "resources": ["GPE.png"],
+  "matches": ["<all_urls>"]
+}]
 }
