@@ -73,26 +73,8 @@
       // Clear the stored text
       chrome.storage.local.remove('selectedText');
     }
-  });  // Theme Toggle
-  const themeToggle = document.getElementById('themeToggle');
-
-  // Load saved theme
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme) {
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  } else {
-    // Default to dark theme
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
-
-  // Toggle theme when button is clicked
-  themeToggle.addEventListener('click', function() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
   });
+
 
   // Translation Form
   const translationForm = document.getElementById('translationForm');
@@ -225,5 +207,144 @@ const modal = document.getElementById('translationModal');
       actualResponse.style.display = 'block';
       actualResponse.textContent = `Error: ${error.message}`;
     });
+  });
+});
+// Replace dropdown selection with card selection
+document.addEventListener('DOMContentLoaded', function() {
+  // Hide the original dropdown
+  const originalSelect = document.getElementById('iconFunction');
+  if (originalSelect) {
+    originalSelect.style.display = 'none';
+  }
+
+  // Hide the save button since we're auto-saving
+  const saveButton = document.getElementById('saveFunction');
+  if (saveButton) {
+    saveButton.style.display = 'none';
+  }
+
+  // Get all action cards
+  const actionCards = document.querySelectorAll('.action-card');
+  let selectedValue = 'translate'; // Default value
+
+  // Add click event listener to each card
+  actionCards.forEach(card => {
+    card.addEventListener('click', function() {
+      // Remove selected class from all cards
+      actionCards.forEach(c => c.classList.remove('selected'));
+
+      // Add selected class to clicked card
+      this.classList.add('selected');
+
+      // Update selected value
+      selectedValue = this.dataset.value;
+
+      // Update the hidden select element to maintain compatibility
+      if (originalSelect) {
+        originalSelect.value = selectedValue;
+      }
+
+      // Show/hide corresponding options based on selected card
+      updateVisibleOptions(selectedValue);
+
+      // Auto-save the preference
+      chrome.storage.sync.set({
+        'iconFunction': selectedValue
+      }, function() {
+        // Show feedback to user
+        showFeedback('Preference saved!');
+      });
+    });
+  });
+
+  // Initialize selection based on saved preference
+  chrome.storage.sync.get('iconFunction', function(data) {
+    if (data.iconFunction) {
+      selectedValue = data.iconFunction;
+
+      // Find the card with the saved value and select it
+      actionCards.forEach(card => {
+        if (card.dataset.value === selectedValue) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+
+      // Update visible options
+      updateVisibleOptions(selectedValue);
+    }
+  });
+});
+
+// Function to update visible options based on selection
+function updateVisibleOptions(value) {
+  const translateOptions = document.getElementById('translateOptions');
+  const searchOptions = document.getElementById('searchOptions');
+
+  // Hide all options first
+  translateOptions.style.display = 'none';
+  searchOptions.style.display = 'none';
+
+  // Show relevant options based on selection
+  if (value === 'translate') {
+    translateOptions.style.display = 'block';
+  } else if (value === 'search') {
+    searchOptions.style.display = 'block';
+  }
+}
+
+// Feedback toast function
+function showFeedback(message) {
+  const feedback = document.createElement('div');
+  feedback.textContent = message;
+  feedback.style.position = 'fixed';
+  feedback.style.bottom = '20px';
+  feedback.style.left = '50%';
+  feedback.style.transform = 'translateX(-50%)';
+  feedback.style.padding = '10px 20px';
+  feedback.style.backgroundColor = 'var(--primary-color)';
+  feedback.style.color = 'white';
+  feedback.style.borderRadius = '4px';
+  feedback.style.zIndex = '1000';
+
+  document.body.appendChild(feedback);
+
+  setTimeout(() => {
+    feedback.remove();
+  }, 2000);
+}
+
+// Replace your theme toggle code with this
+document.addEventListener('DOMContentLoaded', function() {
+  const themeToggle = document.getElementById('themeToggle');
+  if (!themeToggle) return;
+
+  // Use let instead of const so we can reassign it
+  let gpeContainer = document.querySelector('.gpe-container');
+  if (!gpeContainer) {
+    // Create container if it doesn't exist
+    const newContainer = document.createElement('div');
+    newContainer.className = 'gpe-container';
+    document.body.appendChild(newContainer);
+    gpeContainer = newContainer; // Now works with let
+  }
+
+  // Load saved theme
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  gpeContainer.setAttribute('data-theme', savedTheme);
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  // Toggle theme when button is clicked
+  themeToggle.addEventListener('click', function() {
+    const currentTheme = gpeContainer.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    // Update both elements for consistency
+    gpeContainer.setAttribute('data-theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+
+    localStorage.setItem('theme', newTheme);
+    console.log('Theme changed to:', newTheme);
   });
 });

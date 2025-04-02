@@ -259,4 +259,47 @@ body {
   right: 10px;
   font-size: 20px;
   cursor: pointer;
+  transition: 0.3s ease all;
+}
+
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 15px 0;
+}
+
+.action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  background-color: var(--background-color);
+  border: 2px solid var(--hover-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-card:hover {
+  border-color: var(--primary-button);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-card.selected {
+  border-color: var(--primary-button);
+  background-color: var(--primary-button);
+}
+
+.card-icon {
+  margin-bottom: 8px;
+  color: var(--primary-button);
+}
+
+.card-title {
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
 }

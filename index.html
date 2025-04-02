@@ -28,16 +28,43 @@
 
     <div class="content">
       <div class="mode-selector">
-        <h2>Icon Click Action</h2>
-        <select id="iconFunction" class="function-select">
-          <option value="translate" selected>Translate Text</option>
-          <option value="copy">Copy to Clipboard</option>
-          <option value="search">Search on Google</option>
-          <option value="define">Define Term</option>
-          <option value="speak">Text to Speech</option>
-        </select>
-        <button id="saveFunction" class="button2">Save Preference</button>
+  <h2>Icon Click Action</h2>
+  <div class="card-container">
+    <div class="action-card selected" data-value="translate">
+      <div class="card-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 8l6 6"></path><path d="M4 14l6-6 2-3"></path><path d="M2 5h12"></path>
+          <path d="M7 2h1"></path><path d="M22 22l-5-10-5 10"></path><path d="M14 18h6"></path>
+        </svg>
       </div>
+      <div class="card-title">Translate Text</div>
+    </div>
+
+
+    <div class="action-card" data-value="search">
+      <div class="card-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <div class="card-title">Search on Google</div>
+    </div>
+
+    <div class="action-card" data-value="define">
+      <div class="card-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+      </div>
+      <div class="card-title">Define Term</div>
+    </div>
+
+
+  </div>
+  <button id="saveFunction" class="button2">Save Preference</button>
+</div>
 
       <div id="translateOptions" class="function-options">
         <h3>Translation Settings</h3>
