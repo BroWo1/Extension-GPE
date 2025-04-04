@@ -1,8 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "GPE Translator",
+  "name": "Extension GPE",
   "version": "1.0",
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "http://server.gpeclub.com:3000/", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "index.html",
     "default_icon": "GPE.png"
@@ -14,7 +17,10 @@
     }
   ],
   "web_accessible_resources": [{
-  "resources": ["GPE.png"],
-  "matches": ["<all_urls>"]
-}]
+    "resources": ["GPE.png"],
+    "matches": ["<all_urls>"]
+  }],
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  }
 }

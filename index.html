@@ -28,7 +28,7 @@
 
     <div class="content">
       <div class="mode-selector">
-  <h2>Icon Click Action</h2>
+  <h2>GPE Button Action</h2>
   <div class="card-container">
     <div class="action-card selected" data-value="translate">
       <div class="card-icon">
@@ -48,7 +48,7 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
       </div>
-      <div class="card-title">Search on Google</div>
+      <div class="card-title">Search Online</div>
     </div>
 
     <div class="action-card" data-value="define">
@@ -60,7 +60,17 @@
       </div>
       <div class="card-title">Define Term</div>
     </div>
-
+  <div class="action-card toggle-card" data-value="newtab" id="newtabToggle">
+  <div class="card-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="12" y1="8" x2="12" y2="16"></line>
+      <line x1="8" y1="12" x2="16" y2="12"></line>
+    </svg>
+  </div>
+  <div class="card-title">Custom New Tab</div>
+  <div class="toggle-indicator"></div>
+</div>
 
   </div>
 </div>
@@ -71,21 +81,11 @@
           <select id="sourceLanguage" class="language-select">
             <option value="en">English</option>
             <option value="zh">Chinese</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
             <option value="de">German</option>
           </select>
-          <div class="swap-icon" id="swapLanguages">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M7 16V4m0 0L3 8m4-4l4 4"></path>
-              <path d="M17 8v12m0 0l4-4m-4 4l-4-4"></path>
-            </svg>
-          </div>
           <select id="targetLanguage" class="language-select">
             <option value="en">English</option>
             <option value="zh" selected>Chinese</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
             <option value="de">German</option>
           </select>
         </div>
@@ -96,12 +96,11 @@
         <select id="searchEngine" class="search-select">
           <option value="google">Google</option>
           <option value="bing">Bing</option>
-          <option value="duckduckgo">DuckDuckGo</option>
         </select>
       </div>
 
       <div id="testSection">
-        <h3>Test Translation</h3>
+        <h3>Translation</h3>
         <form id="translationForm">
           <textarea id="sourceText" class="search-bar" placeholder="Enter text to translate..."></textarea>
           <button type="submit" class="button2">Translate</button>

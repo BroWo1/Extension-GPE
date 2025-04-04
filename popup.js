@@ -45,9 +45,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup card selection
     actionCards.forEach(card => {
       card.addEventListener('click', function() {
-        // Update UI
-        actionCards.forEach(c => c.classList.remove('selected'));
-        this.classList.add('selected');
+      const value = this.getAttribute('data-value');
+
+      // Special handling for toggle cards
+      if (this.classList.contains('toggle-card')) {
+        this.classList.toggle('active');
+
+        if (value === 'newtab') {
+          toggleNewTabOverride();
+        }
+        return; // Don't affect other selections
+      }
+
+      // Regular action cards (mutually exclusive)
+      document.querySelectorAll('.action-card:not(.toggle-card)').forEach(c => {
+        c.classList.remove('selected');
+      });
+      this.classList.add('selected');
 
         const selectedValue = this.dataset.value;
         updateVisibleOptions(selectedValue);
@@ -107,18 +121,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  async function translateText(text, sourceLang, targetLang) {
-    // Simulate translation API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        try {
-          resolve(`${text} [Translated to ${targetLang}]`);
-        } catch (error) {
-          reject(new Error('Translation failed'));
-        }
-      }, 1500);
+async function translateText(text, sourceLang = 'auto', targetLang = 'en') {
+  try {
+    const response = await fetch('http://server.gpeclub.com:3000/api/chatgpt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: text,
+        model: 'qwen-omni-turbo',
+        prompt1: `You are a translation assistant. Translate the following text from ${sourceLang} to ${targetLang}. Only return the translated text, no explanations.`
+      })
     });
+
+    if (!response.ok) {
+      throw new Error(`Server responded with ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.response;
+  } catch (error) {
+    console.error('Translation error:', error);
+    throw new Error('Failed to translate text');
   }
+}
 
   // ======== Modal Management ========
   function showModal(modalId) {
@@ -147,7 +174,6 @@ document.addEventListener('DOMContentLoaded', function() {
     feedback.style.borderRadius = '4px';
     feedback.style.zIndex = '1000';
 
-    document.body.appendChild(feedback);
     setTimeout(() => feedback.remove(), 2000);
   }
 
@@ -155,4 +181,91 @@ document.addEventListener('DOMContentLoaded', function() {
   initTheme();
   initFunctionSelection();
   initTranslation();
+  // Add this to popup.js inside the DOMContentLoaded event listener
+function initAutoSave() {
+  // Get all select elements that need auto-saving
+  const sourceLanguage = document.getElementById('sourceLanguage');
+  const targetLanguage = document.getElementById('targetLanguage');
+  const searchEngine = document.getElementById('searchEngine');
+
+  // Load saved values
+  chrome.storage.sync.get(['sourceLanguage', 'targetLanguage', 'searchEngine'], function(data) {
+    if (data.sourceLanguage) sourceLanguage.value = data.sourceLanguage;
+    if (data.targetLanguage) targetLanguage.value = data.targetLanguage;
+    if (data.searchEngine) searchEngine.value = data.searchEngine;
+  });
+
+  // Add change event listeners
+  sourceLanguage.addEventListener('change', function() {
+    chrome.storage.sync.set({'sourceLanguage': this.value});
+  });
+
+  targetLanguage.addEventListener('change', function() {
+    chrome.storage.sync.set({'targetLanguage': this.value});
+  });
+
+  searchEngine.addEventListener('change', function() {
+    chrome.storage.sync.set({'searchEngine': this.value});
+  });
+}
+
+// Add initAutoSave() to the initialization section at the bottom
+// ======== Initialize Everything ========
+initTheme();
+initFunctionSelection();
+initTranslation();
+initAutoSave(); // Add this line
+    initializeNewTabToggle();
+
 });
+function initializeNewTabToggle() {
+  chrome.storage.sync.get(['newTabEnabled'], function(data) {
+    const newtabToggle = document.getElementById('newtabToggle');
+    if (newtabToggle) {
+      if (data.newTabEnabled) {
+        newtabToggle.classList.add('active');
+      } else {
+        newtabToggle.classList.remove('active');
+      }
+    }
+  });
+}
+function toggleNewTabOverride() {
+  chrome.storage.sync.get(['newTabEnabled'], function(data) {
+    const isEnabled = !data.newTabEnabled;
+
+    chrome.storage.sync.set({ newTabEnabled: isEnabled }, function() {
+      const newtabToggle = document.getElementById('newtabToggle');
+
+      if (isEnabled) {
+        newtabToggle.classList.add('active');
+        //showFeedbackToast('Custom new tab page enabled');
+        showFeedbackToast('Custom new tab not available yet');
+      } else {
+        newtabToggle.classList.remove('active');
+        //showFeedbackToast('Custom new tab page disabled');
+        showFeedbackToast('Custom new tab not available yet');
+      }
+    });
+  });
+}
+function showFeedbackToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'feedback-toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  // Trigger a reflow
+  toast.offsetHeight;
+
+  // Add visible class to start animation
+  toast.classList.add('visible');
+
+  // Remove after animation completes
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => {
+      document.body.removeChild(toast);
+    }, 300);
+  }, 3000);
+}

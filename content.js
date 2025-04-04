@@ -155,17 +155,30 @@ document.addEventListener('mousedown', function(event) {
   }
 });
 
-// Translation function (Placeholder)
 async function translateText(text, sourceLang = 'auto', targetLang = 'en') {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Simulate translation
-      resolve(`${text} [Translated to ${targetLang}]`);
-    }, 1000);
-  });
-  // Replace with actual API call in a real extension
+  try {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({
+        action: 'callAPI',
+        url: 'http://server.gpeclub.com:3000/api/chatgpt',
+        data: {
+          query: text,
+          model: 'qwen-omni-turbo',
+          prompt1: `You are a translation assistant. Translate the following text from ${sourceLang} to ${targetLang}. Only return the translated text, no explanations.`
+        }
+      }, response => {
+        if (response && response.success) {
+          resolve(response.data.response);
+        } else {
+          reject(new Error(response?.error || 'API call failed'));
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Translation error:', error);
+    throw error;
+  }
 }
-
 // Close button functionality for the popup
 translationPopup.querySelector('.gpe-close-button').addEventListener('click', function() {
   translationPopup.style.display = 'none';
@@ -207,6 +220,9 @@ translationIcon.addEventListener('click', function(event) {
         case 'speak':
           speakText(selectedText);
           break;
+        case 'newtab':
+          toggleNewTabOverride();
+          break;
         default:
           showTranslationPopup(selectedText);
       }
@@ -217,12 +233,21 @@ translationIcon.addEventListener('click', function(event) {
   fadeOutIcon();
 });
 
-// New helper functions
 function showTranslationPopup(text, sourceLang = 'auto', targetLang = 'en') {
-  // Your existing translation popup code
   translationPopup.style.display = 'block';
   translationPopup.style.top = translationIcon.style.top;
   translationPopup.style.left = translationIcon.style.left;
+
+  // Reset popup title to "Translation"
+  const popupTitle = translationPopup.querySelector('div > div:first-child');
+  if (popupTitle) {
+    popupTitle.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+        <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z" fill="currentColor"/>
+      </svg>
+      Translation
+    `;
+  }
 
   const loadingElement = translationPopup.querySelector('.gpe-loading');
   const resultElement = translationPopup.querySelector('.gpe-result');
@@ -251,8 +276,7 @@ function copyToClipboard(text) {
 function searchWeb(text, engine = 'google') {
   const engines = {
     google: 'https://www.google.com/search?q=',
-    bing: 'https://www.bing.com/search?q=',
-    duckduckgo: 'https://duckduckgo.com/?q='
+    bing: 'https://www.bing.com/search?q='
   };
 
   const baseUrl = engines[engine] || engines.google;
@@ -260,7 +284,46 @@ function searchWeb(text, engine = 'google') {
 }
 
 function defineText(text) {
-  window.open('https://www.merriam-webster.com/dictionary/' + encodeURIComponent(text), '_blank');
+  // Show translation popup with loading state
+  translationPopup.style.display = 'block';
+  translationPopup.style.top = translationIcon.style.top;
+  translationPopup.style.left = translationIcon.style.left;
+
+  // Get popup title element and change it to "Definition"
+  const popupTitle = translationPopup.querySelector('div > div:first-child');
+  if (popupTitle) {
+    popupTitle.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+        <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h14V5H5zm2 2h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z" fill="currentColor"/>
+      </svg>
+      Definition
+    `;
+  }
+
+  const loadingElement = translationPopup.querySelector('.gpe-loading');
+  const resultElement = translationPopup.querySelector('.gpe-result');
+  loadingElement.style.display = 'block';
+  resultElement.style.display = 'none';
+
+  // Use background script to call API
+  chrome.runtime.sendMessage({
+    action: 'callAPI',
+    url: 'http://server.gpeclub.com:3000/api/chatgpt',
+    data: {
+      query: text,
+      model: 'qwen-omni-turbo',
+      prompt1: 'You are a dictionary assistant. Provide a clear and concise definition of the following term or phrase. Include part of speech, meaning, and a simple example if appropriate.'
+    }
+  }, response => {
+    loadingElement.style.display = 'none';
+    resultElement.style.display = 'block';
+
+    if (response && response.success) {
+      resultElement.textContent = response.data.response;
+    } else {
+      resultElement.textContent = `Error: ${response?.error || 'Definition failed'}`;
+    }
+  });
 }
 
 function speakText(text) {
@@ -300,5 +363,16 @@ function showFeedbackToast(message) {
     }, 300);
   }, 3000);
 }
+function toggleNewTabOverride() {
+  chrome.storage.sync.get(['newTabEnabled'], function(data) {
+    const isEnabled = !data.newTabEnabled;
 
+    chrome.storage.sync.set({ newTabEnabled: isEnabled }, function() {
+      showFeedbackToast(isEnabled ?
+        'Custom new tab page enabled' :
+        'Default new tab page restored');
+    });
+  });
+}
 console.log('GPE Translator content script loaded.'); // Log script loading
+
