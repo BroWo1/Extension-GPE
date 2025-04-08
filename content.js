@@ -10,6 +10,7 @@ styleElement.textContent = `
     --hover-light: rgba(0, 0, 0, 0.05);
     --hover-heavy: rgba(0, 0, 0, 0.1);
     --shadow-color: rgba(0, 0, 0, 0.2);
+   font-size: 14px;
   }
 
   .gpe-container[data-theme="dark"] {
@@ -80,7 +81,7 @@ translationPopup.className = 'gpe-translator-popup';
 translationPopup.style.display = 'none';
 translationPopup.style.position = 'absolute';
 translationPopup.style.zIndex = '10001';
-translationPopup.style.maxWidth = '300px';
+translationPopup.style.maxWidth = '400px';
 translationPopup.style.minWidth = '200px';
 translationPopup.innerHTML = `
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -110,8 +111,14 @@ document.addEventListener('mouseup', function(event) {
     return;
   }
 
-  const selection = window.getSelection();
-  const selectedText = selection.toString().trim();
+const selection = window.getSelection();
+let selectedText = selection.toString().trim();
+
+const MAX_CHARS = 3000;
+if (selectedText.length > MAX_CHARS) {
+  selectedText = selectedText.substring(0, MAX_CHARS);
+  console.log(`Selection truncated to ${MAX_CHARS} characters`);
+}
 
   if (selectedText.length > 0) {
     const range = selection.getRangeAt(0);
@@ -184,7 +191,7 @@ translationPopup.querySelector('.gpe-close-button').addEventListener('click', fu
   translationPopup.style.display = 'none';
 });
 
-/// Add to content.js - replace the translation icon click handler
+/// Add to content_old.js - replace the translation icon click handler
 
 translationIcon.addEventListener('click', function(event) {
   // Stop event from bubbling up to document

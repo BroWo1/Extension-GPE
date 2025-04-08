@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const actionCards = document.querySelectorAll('.action-card');
   const translateOptions = document.getElementById('translateOptions');
   const searchOptions = document.getElementById('searchOptions');
-  const swapLanguages = document.getElementById('swapLanguages');
+  //const swapLanguages = document.getElementById('swapLanguages');
   const translationForm = document.getElementById('translationForm');
   const sourceText = document.getElementById('sourceText');
   const translationResult = document.getElementById('translationResult');
@@ -15,18 +15,33 @@ document.addEventListener('DOMContentLoaded', function() {
   const translationModal = document.getElementById('translationModal');
   const closeButton = translationModal.querySelector('.close-button');
 
-  // ======== Theme Management ========
-  function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+function initTheme() {
+  const themeToggle = document.getElementById('themeToggle');
 
-    themeToggle.addEventListener('click', function() {
-      const currentTheme = document.documentElement.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-    });
+  if (!themeToggle) {
+    console.error('Theme toggle button not found');
+    return;
   }
+
+  // Get saved theme or use system preference as fallback
+  const savedTheme = localStorage.getItem('theme') ||
+                     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+  // Apply theme to HTML element
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  console.log('Initial theme set to:', savedTheme);
+
+  // Add click event listener
+  themeToggle.addEventListener('click', function() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    // Apply new theme
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    console.log('Theme changed to:', newTheme);
+  });
+}
 
   // ======== Function Selection ========
   function initFunctionSelection() {
@@ -91,9 +106,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Setup language swap
-    swapLanguages.addEventListener('click', function() {
-      [sourceLanguage.value, targetLanguage.value] = [targetLanguage.value, sourceLanguage.value];
-    });
+    //swapLanguages.addEventListener('click', function() {
+    //  [sourceLanguage.value, targetLanguage.value] = [targetLanguage.value, sourceLanguage.value];
+    //});
 
     // Handle form submission
     translationForm.addEventListener('submit', function(event) {
@@ -177,11 +192,7 @@ async function translateText(text, sourceLang = 'auto', targetLang = 'en') {
     setTimeout(() => feedback.remove(), 2000);
   }
 
-  // ======== Initialize Everything ========
-  initTheme();
-  initFunctionSelection();
-  initTranslation();
-  // Add this to popup.js inside the DOMContentLoaded event listener
+
 function initAutoSave() {
   // Get all select elements that need auto-saving
   const sourceLanguage = document.getElementById('sourceLanguage');
@@ -209,13 +220,11 @@ function initAutoSave() {
   });
 }
 
-// Add initAutoSave() to the initialization section at the bottom
-// ======== Initialize Everything ========
-initTheme();
-initFunctionSelection();
-initTranslation();
-initAutoSave(); // Add this line
-    initializeNewTabToggle();
+  initTheme();
+  initFunctionSelection();
+  initTranslation();
+  initAutoSave();
+  initializeNewTabToggle();
 
 });
 function initializeNewTabToggle() {
@@ -240,11 +249,11 @@ function toggleNewTabOverride() {
       if (isEnabled) {
         newtabToggle.classList.add('active');
         //showFeedbackToast('Custom new tab page enabled');
-        showFeedbackToast('Custom new tab not available yet');
+        showFeedbackToast('Custom new tab switch not available yet');
       } else {
         newtabToggle.classList.remove('active');
         //showFeedbackToast('Custom new tab page disabled');
-        showFeedbackToast('Custom new tab not available yet');
+        showFeedbackToast('Custom new tab switch not available yet');
       }
     });
   });

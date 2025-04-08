@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Extension GPE",
   "version": "1.0",
-  "permissions": ["storage", "activeTab", "http://server.gpeclub.com:3000/", "tabs"],
+  "permissions": ["storage", "http://server.gpeclub.com:3000/"],
   "background": {
     "service_worker": "background.js"
   },
@@ -19,8 +19,5 @@
   "web_accessible_resources": [{
     "resources": ["GPE.png"],
     "matches": ["<all_urls>"]
-  }],
-  "chrome_url_overrides": {
-    "newtab": "newtab.html"
-  }
+  }]
 }
