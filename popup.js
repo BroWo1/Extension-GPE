@@ -138,14 +138,14 @@ function initTheme() {
 
 async function translateText(text, sourceLang = 'auto', targetLang = 'en') {
   try {
-    const response = await fetch('http://server.gpeclub.com:3000/api/chatgpt', {
+    const response = await fetch('https://server.gpeclub.com:1000/api/chatgpt', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         query: text,
-        model: 'qwen-omni-turbo',
+        model: 'deepseek-chat',
         prompt1: `You are a translation assistant. Translate the following text from ${sourceLang} to ${targetLang}. Only return the translated text, no explanations.`
       })
     });

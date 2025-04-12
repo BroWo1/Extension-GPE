@@ -167,10 +167,10 @@ async function translateText(text, sourceLang = 'auto', targetLang = 'en') {
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({
         action: 'callAPI',
-        url: 'http://server.gpeclub.com:3000/api/chatgpt',
+        url: 'https://server.gpeclub.com:1000/api/chatgpt',
         data: {
           query: text,
-          model: 'qwen-omni-turbo',
+          model: 'deepseek-chat',
           prompt1: `You are a translation assistant. Translate the following text from ${sourceLang} to ${targetLang}. Only return the translated text, no explanations.`
         }
       }, response => {
@@ -315,10 +315,10 @@ function defineText(text) {
   // Use background script to call API
   chrome.runtime.sendMessage({
     action: 'callAPI',
-    url: 'http://server.gpeclub.com:3000/api/chatgpt',
+    url: 'https://server.gpeclub.com:1000/api/chatgpt',
     data: {
       query: text,
-      model: 'qwen-omni-turbo',
+      model: 'deepseek-chat',
       prompt1: 'You are a dictionary assistant. Provide a clear and concise definition of the following term or phrase. Include part of speech, meaning, and a simple example if appropriate.'
     }
   }, response => {
