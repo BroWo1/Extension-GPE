@@ -1,55 +1,6 @@
 // Create theme-aware styling
 const styleElement = document.createElement('style');
 const logoURL = chrome.runtime.getURL('GPE.png');
-styleElement.textContent = `
-  .gpe-container {
-    --bg-color: white;
-    --text-color: #333;
-    --primary-color: #10a37f;
-    --primary-light: rgba(16, 163, 127, 0.3);
-    --hover-light: rgba(0, 0, 0, 0.05);
-    --hover-heavy: rgba(0, 0, 0, 0.1);
-    --shadow-color: rgba(0, 0, 0, 0.2);
-   font-size: 14px;
-  }
-
-  .gpe-container[data-theme="dark"] {
-    --bg-color: #2d2d2d;
-    --text-color: #f0f0f0;
-    --primary-color: #10a37f;
-    --primary-light: rgba(16, 163, 127, 0.3);
-    --hover-light: rgba(255, 255, 255, 0.05);
-    --hover-heavy: rgba(255, 255, 255, 0.1);
-    --shadow-color: rgba(0, 0, 0, 0.4);
-  }
-
-  .gpe-translator-popup {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px var(--shadow-color);
-    padding: 15px;
-    transition: all 0.2s ease;
-  }
-
-  .gpe-close-button:hover {
-    background-color: var(--hover-light);
-  }
-
-  @keyframes gpe-spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .gpe-loading-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid var(--primary-light);
-    border-radius: 50%;
-    border-top-color: var(--primary-color);
-    animation: gpe-spin 1s linear infinite;
-  }
-`;
 document.head.appendChild(styleElement);
 
 const gpeContainer = document.createElement('div');
@@ -62,49 +13,36 @@ gpeContainer.setAttribute('data-theme', savedTheme);
 
 
 
+// Replace the translation icon creation code
 const translationIcon = document.createElement('img');
 translationIcon.src = logoURL;
 translationIcon.alt = 'Translate';
-translationIcon.style.position = 'absolute';
-translationIcon.style.zIndex = '10000';
-translationIcon.style.display = 'none'; // Start hidden
-translationIcon.style.cursor = 'pointer';
-translationIcon.style.width = '24px';
-translationIcon.style.height = '24px';
-translationIcon.style.opacity = '0';
-translationIcon.style.transition = 'opacity 0.15s ease-in-out';
-document.body.appendChild(translationIcon);
-
-// Create translation popup (remains the same)
+translationIcon.className = 'gpe-translation-icon';
+gpeContainer.appendChild(translationIcon);
+// Replace the popup creation code
 const translationPopup = document.createElement('div');
 translationPopup.className = 'gpe-translator-popup';
-translationPopup.style.display = 'none';
-translationPopup.style.position = 'absolute';
-translationPopup.style.zIndex = '10001';
-translationPopup.style.maxWidth = '400px';
-translationPopup.style.minWidth = '200px';
 translationPopup.innerHTML = `
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-    <div style="font-weight: bold; display: flex; align-items: center;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
-        <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z" fill="currentColor"/>
-      </svg>
-      Translation
+  <div class="gpe-popup-header">
+    <div class="gpe-popup-title">
+      <!-- Title will be set dynamically -->
     </div>
-    <div class="gpe-close-button" style="cursor: pointer; font-size: 18px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">×</div>
+    <div class="gpe-close-button">×</div>
   </div>
-  <div class="gpe-translation-content">
-    <div class="gpe-loading" style="display: none; text-align: center; padding: 15px;">
+  <div class="gpe-popup-content">
+    <div class="gpe-loading">
       <div class="gpe-loading-spinner"></div>
-      <span style="margin-left: 10px;">Translating...</span>
+      <span>Processing...</span>
     </div>
-    <div class="gpe-result" style="display: none; padding: 10px 0;"></div>
+    <div class="gpe-result"></div>
+    <div class="gpe-ask-interface">
+      <div class="gpe-selected-text-display"></div>
+      <textarea class="gpe-ask-input" placeholder="Ask a question about the text..." style="resize: none;"></textarea>
+      <button class="gpe-ask-submit">Send</button>
+    </div>
   </div>
 `;
-document.body.appendChild(translationPopup);
-gpeContainer.appendChild(translationIcon);
 gpeContainer.appendChild(translationPopup);
-
 document.addEventListener('mouseup', function(event) {
   // Avoid showing icon if the click was on the icon itself or the popup
   if (translationIcon.contains(event.target) || translationPopup.contains(event.target)) {
@@ -125,9 +63,17 @@ if (selectedText.length > MAX_CHARS) {
     const rect = range.getBoundingClientRect();
 
     // First make it visible but transparent
+    // translationIcon.style.display = 'block';
+    // translationIcon.style.top = `${window.scrollY + rect.bottom + 5}px`;
+    // translationIcon.style.left = `${window.scrollX + rect.left}px`;
+
+    const scrollY     = window.scrollY || document.documentElement.scrollTop;
+    const scrollX     = window.scrollX || document.documentElement.scrollLeft;
+    const iconOffset  = 8; // px offset from cursor
+    
     translationIcon.style.display = 'block';
-    translationIcon.style.top = `${window.scrollY + rect.bottom + 5}px`;
-    translationIcon.style.left = `${window.scrollX + rect.left}px`;
+    translationIcon.style.top     = `${scrollY + event.clientY + iconOffset}px`;
+    translationIcon.style.left    = `${scrollX + event.clientX + iconOffset}px`;
 
     // Force a reflow before changing opacity for animation to work
     translationIcon.offsetHeight;
@@ -224,6 +170,9 @@ translationIcon.addEventListener('click', function(event) {
         case 'define':
           defineText(selectedText);
           break;
+        case 'ask': // Add this case
+          showAskAIPanel(selectedText);
+          break;
         case 'speak':
           speakText(selectedText);
           break;
@@ -245,30 +194,25 @@ function showTranslationPopup(text, sourceLang = 'auto', targetLang = 'en') {
   translationPopup.style.top = translationIcon.style.top;
   translationPopup.style.left = translationIcon.style.left;
 
-  // Reset popup title to "Translation"
-  const popupTitle = translationPopup.querySelector('div > div:first-child');
-  if (popupTitle) {
-    popupTitle.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
-        <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z" fill="currentColor"/>
-      </svg>
-      Translation
-    `;
-  }
+  setPopupTitle('Translation', `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+      <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z" fill="currentColor"/>
+    </svg>
+  `);
 
-  const loadingElement = translationPopup.querySelector('.gpe-loading');
-  const resultElement = translationPopup.querySelector('.gpe-result');
-  loadingElement.style.display = 'block';
-  resultElement.style.display = 'none';
+  hideAllPopupSections();
+  showPopupSection('gpe-loading');
+  translationPopup.querySelector('.gpe-loading span').textContent = 'Translating...';
+
 
   translateText(text, sourceLang, targetLang).then(translation => {
-    loadingElement.style.display = 'none';
-    resultElement.style.display = 'block';
-    resultElement.textContent = translation;
+    showPopupSection('gpe-loading', 'none');
+    showPopupSection('gpe-result');
+    translationPopup.querySelector('.gpe-result').textContent = translation;
   }).catch(error => {
-    loadingElement.style.display = 'none';
-    resultElement.style.display = 'block';
-    resultElement.textContent = `Error: ${error.message || 'Translation failed'}`;
+    showPopupSection('gpe-loading', 'none');
+    showPopupSection('gpe-result');
+    translationPopup.querySelector('.gpe-result').textContent = `Error: ${error.message || 'Translation failed'}`;
   });
 }
 
@@ -291,28 +235,21 @@ function searchWeb(text, engine = 'google') {
 }
 
 function defineText(text) {
-  // Show translation popup with loading state
   translationPopup.style.display = 'block';
   translationPopup.style.top = translationIcon.style.top;
   translationPopup.style.left = translationIcon.style.left;
 
-  // Get popup title element and change it to "Definition"
-  const popupTitle = translationPopup.querySelector('div > div:first-child');
-  if (popupTitle) {
-    popupTitle.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
-        <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h14V5H5zm2 2h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z" fill="currentColor"/>
-      </svg>
-      Definition
-    `;
-  }
+  setPopupTitle('Definition', `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+      <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h14V5H5zm2 2h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z" fill="currentColor"/>
+    </svg>
+  `);
 
-  const loadingElement = translationPopup.querySelector('.gpe-loading');
-  const resultElement = translationPopup.querySelector('.gpe-result');
-  loadingElement.style.display = 'block';
-  resultElement.style.display = 'none';
+  hideAllPopupSections();
+  showPopupSection('gpe-loading');
+  translationPopup.querySelector('.gpe-loading span').textContent = 'Defining...';
 
-  // Use background script to call API
+
   chrome.runtime.sendMessage({
     action: 'callAPI',
     url: 'https://server.gpeclub.com:1000/api/chatgpt',
@@ -322,13 +259,13 @@ function defineText(text) {
       prompt1: 'You are a dictionary assistant. Provide a clear and concise definition of the following term or phrase. Include part of speech, meaning, and a simple example if appropriate.'
     }
   }, response => {
-    loadingElement.style.display = 'none';
-    resultElement.style.display = 'block';
+    showPopupSection('gpe-loading', 'none');
+    showPopupSection('gpe-result');
 
     if (response && response.success) {
-      resultElement.textContent = response.data.response;
+      translationPopup.querySelector('.gpe-result').textContent = response.data.response;
     } else {
-      resultElement.textContent = `Error: ${response?.error || 'Definition failed'}`;
+      translationPopup.querySelector('.gpe-result').textContent = `Error: ${response?.error || 'Definition failed'}`;
     }
   });
 }
@@ -383,3 +320,93 @@ function toggleNewTabOverride() {
 }
 console.log('GPE Translator content script loaded.'); // Log script loading
 
+function setPopupTitle(title, svgIconHtml) {
+  const popupTitleElement = translationPopup.querySelector('.gpe-popup-title');
+  if (popupTitleElement) {
+    popupTitleElement.innerHTML = `<span class="gpe-icon-wrapper">${svgIconHtml}</span>${title}`;
+  }
+}
+
+// Function to show/hide specific parts of the popup content
+function showPopupSection(sectionClass, display = 'block') {
+  const section = translationPopup.querySelector(`.${sectionClass}`);
+  if (section) section.style.display = display;
+}
+
+// Function to hide all dynamic content sections
+function hideAllPopupSections() {
+  showPopupSection('gpe-loading', 'none');
+  showPopupSection('gpe-result', 'none');
+  showPopupSection('gpe-ask-interface', 'none');
+}
+
+function showAskAIPanel(selectedText) {
+  translationPopup.style.display = 'block';
+  translationPopup.style.top = translationIcon.style.top;
+  translationPopup.style.left = translationIcon.style.left;
+
+  setPopupTitle('Ask AI', `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+      <path d="M12 17h.01"></path>
+      <circle cx="12" cy="12" r="10"></circle>
+    </svg>
+  `);
+
+  hideAllPopupSections();
+  showPopupSection('gpe-ask-interface');
+
+  const selectedTextDisplay = translationPopup.querySelector('.gpe-selected-text-display');
+  const askInput = translationPopup.querySelector('.gpe-ask-input');
+  const askSubmit = translationPopup.querySelector('.gpe-ask-submit');
+  const resultElement = translationPopup.querySelector('.gpe-result');
+  const loadingElement = translationPopup.querySelector('.gpe-loading');
+
+  selectedTextDisplay.textContent = `Context: "${selectedText}"`;
+  askInput.value = ''; // Clear previous question
+  resultElement.textContent = ''; // Clear previous result
+
+  // Remove previous listener to avoid duplicates if panel is reopened
+  const newSubmitButton = askSubmit.cloneNode(true);
+  askSubmit.parentNode.replaceChild(newSubmitButton, askSubmit);
+
+  newSubmitButton.addEventListener('click', () => {
+    const question = askInput.value.trim();
+    if (!question) {
+      showFeedbackToast('Please enter a question.');
+      return;
+    }
+    hideAllPopupSections();
+    showPopupSection('gpe-ask-interface'); // Keep interface visible
+    showPopupSection('gpe-loading'); // Show loading below input
+    loadingElement.querySelector('span').textContent = 'Thinking...';
+
+
+    chrome.runtime.sendMessage({
+      action: 'callAPI',
+      url: 'https://server.gpeclub.com:1000/api/chatgpt',
+      data: {
+        query: `Context: "${selectedText}"\n\nQuestion: "${question}"`,
+        model: 'deepseek-chat',
+        prompt1: 'You are a helpful assistant. Answer the user\'s question based on the provided context. If the context doesn\'t contain the answer, say so clearly. Format your response using Markdown.' // Added Markdown instruction
+      }
+    }, response => {
+      showPopupSection('gpe-loading', 'none');
+      showPopupSection('gpe-result'); // Show result area
+
+      if (response && response.success && typeof marked !== 'undefined') { // Check if marked is loaded
+        // Use marked to parse the Markdown response into HTML
+        resultElement.innerHTML = marked.parse(response.data.response);
+      } else if (response && response.success) {
+        // Fallback if marked is not available
+        resultElement.textContent = response.data.response;
+        console.warn('Marked library not found. Displaying raw text.');
+      }
+       else {
+        resultElement.textContent = `Error: ${response?.error || 'Failed to get answer'}`;
+      }
+      // Keep the ask interface visible so the user can ask follow-up questions or see the context/question
+      showPopupSection('gpe-ask-interface');
+    });
+  });
+}
