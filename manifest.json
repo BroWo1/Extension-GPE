@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Extension GPE",
-  "version": "1.1",
+  "version": "1.5",
   "permissions": ["storage", "https://server.gpeclub.com:1000/"],
   "background": {
     "service_worker": "background.js"
@@ -9,6 +9,9 @@
   "action": {
     "default_popup": "index.html",
     "default_icon": "GPE.png"
+  },
+    "icons": {
+    "128": "GPE128.png"
   },
   "content_scripts": [
     {

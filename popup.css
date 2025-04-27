@@ -411,6 +411,7 @@ body {
 #testSection {
   margin-top: 10px;
 }
+
 /* Toggle card styling */
 .toggle-card {
   position: relative;
@@ -440,6 +441,7 @@ body {
 .toggle-card.active {
   border-color: var(--primary-button);
 }
+
 .feedback-toast {
   position: fixed;
   bottom: 20px;
@@ -458,4 +460,85 @@ body {
 .feedback-toast.visible {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
+}
+
+/* History Section Styling */
+.history-section {
+  margin-top: 20px; /* Add space above the history section */
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color); /* Separator line */
+}
+
+.history-section h2 {
+  font-size: 1em; /* Match other h3 titles */
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+#historyList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 150px; /* Limit height and make scrollable */
+  overflow-y: auto;
+  border: 1px solid var(--border-color); /* Optional: Add border */
+  border-radius: 4px; /* Match other rounded corners */
+  background-color: var(--search-bg); /* Slightly different background */
+}
+
+#historyList li {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9em;
+  color: var(--secondary-text);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px; /* Space between elements */
+}
+
+#historyList li:last-child {
+  border-bottom: none; /* Remove border from the last item */
+}
+
+#historyList li .history-action {
+  font-weight: 600;
+  color: var(--primary-color); /* Highlight the action type */
+  flex-shrink: 0; /* Prevent action type from shrinking */
+}
+
+#historyList li .history-text {
+  flex-grow: 1; /* Allow text to take available space */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* Add ellipsis for overflow */
+  color: var(--text-color);
+}
+
+#historyList li .history-time {
+  font-size: 0.8em;
+  color: var(--secondary-text);
+  flex-shrink: 0;
+}
+
+/* Style for the 'No history yet' message */
+#historyList li:only-child[style*="font-style: italic"] {
+  color: var(--secondary-text);
+  text-align: center;
+  padding: 15px;
+}
+
+/* Scrollbar styling for history list (optional, webkit browsers) */
+#historyList::-webkit-scrollbar {
+  width: 6px;
+}
+
+#historyList::-webkit-scrollbar-track {
+  background: var(--search-bg);
+  border-radius: 3px;
+}
+
+#historyList::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 3px;
 }

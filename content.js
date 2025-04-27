@@ -11,8 +11,6 @@ document.body.appendChild(gpeContainer);
 const savedTheme = localStorage.getItem('theme') || 'dark';
 gpeContainer.setAttribute('data-theme', savedTheme);
 
-
-
 // Replace the translation icon creation code
 const translationIcon = document.createElement('img');
 translationIcon.src = logoURL;
@@ -62,15 +60,10 @@ if (selectedText.length > MAX_CHARS) {
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
 
-    // First make it visible but transparent
-    // translationIcon.style.display = 'block';
-    // translationIcon.style.top = `${window.scrollY + rect.bottom + 5}px`;
-    // translationIcon.style.left = `${window.scrollX + rect.left}px`;
-
     const scrollY     = window.scrollY || document.documentElement.scrollTop;
     const scrollX     = window.scrollX || document.documentElement.scrollLeft;
     const iconOffset  = 8; // px offset from cursor
-    
+
     translationIcon.style.display = 'block';
     translationIcon.style.top     = `${scrollY + event.clientY + iconOffset}px`;
     translationIcon.style.left    = `${scrollX + event.clientX + iconOffset}px`;
@@ -137,6 +130,53 @@ translationPopup.querySelector('.gpe-close-button').addEventListener('click', fu
   translationPopup.style.display = 'none';
 });
 
+// Fix the popup position clamping function
+function clampPopupPosition(popup, top, left) {
+  // Get current document scroll position
+  const scrollX = window.scrollX || document.documentElement.scrollLeft;
+  const scrollY = window.scrollY || document.documentElement.scrollTop;
+  
+  // Save original state
+  const originalDisplay = popup.style.display;
+  const originalVisibility = popup.style.visibility;
+  
+  // Make popup temporarily visible but hidden to measure dimensions
+  popup.style.visibility = 'hidden';
+  popup.style.display = 'block';
+  popup.style.left = '0';
+  popup.style.top = '0';
+  
+  // Force layout reflow to ensure dimensions are calculated
+  void popup.offsetHeight;
+  
+  // Get dimensions
+  const popupRect = popup.getBoundingClientRect();
+  const popupWidth = popupRect.width;
+  const popupHeight = popupRect.height;
+  
+  // Restore original state
+  popup.style.visibility = originalVisibility;
+  popup.style.display = originalDisplay;
+  
+  // Calculate viewport boundaries (considering scroll position)
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  // Calculate limits to keep popup fully in viewport
+  const maxLeft = viewportWidth - popupWidth - 10; // 10px safety margin
+  const maxTop = viewportHeight - popupHeight - 10; // 10px safety margin
+  
+  // Ensure input values are numbers
+  const topValue = parseInt(top, 10) || 0;
+  const leftValue = parseInt(left, 10) || 0;
+  
+  // Ensure popup stays within boundaries
+  const clampedLeft = Math.min(Math.max(10, leftValue - scrollX), maxLeft) + scrollX;
+  const clampedTop = Math.min(Math.max(10, topValue - scrollY), maxTop) + scrollY;
+  
+  return { top: clampedTop, left: clampedLeft };
+}
+
 /// Add to content_old.js - replace the translation icon click handler
 
 translationIcon.addEventListener('click', function(event) {
@@ -189,10 +229,41 @@ translationIcon.addEventListener('click', function(event) {
   fadeOutIcon();
 });
 
+// ======== History Management (Content Script) ========
+const MAX_HISTORY_ITEMS_CS = 10;
+const HISTORY_STORAGE_KEY_CS = 'requestHistory';
+
+async function addHistoryEntryCS(action, text) {
+  try {
+    const result = await chrome.storage.local.get([HISTORY_STORAGE_KEY_CS]);
+    let history = result[HISTORY_STORAGE_KEY_CS] || [];
+    
+    // Add new entry to the beginning
+    history.unshift({ action, text, timestamp: new Date().toISOString() });
+    
+    // Keep only the last MAX_HISTORY_ITEMS entries
+    if (history.length > MAX_HISTORY_ITEMS_CS) {
+      history = history.slice(0, MAX_HISTORY_ITEMS_CS);
+    }
+    
+    await chrome.storage.local.set({ [HISTORY_STORAGE_KEY_CS]: history });
+  } catch (error) {
+    console.error("Error adding history entry from content script:", error);
+  }
+}
+
 function showTranslationPopup(text, sourceLang = 'auto', targetLang = 'en') {
+  // Get raw position from the translation icon
+  const rawTop = parseInt(translationIcon.style.top, 10);
+  const rawLeft = parseInt(translationIcon.style.left, 10);
+  
+  // Calculate the constrained position without making popup visible yet
+  const position = clampPopupPosition(translationPopup, rawTop, rawLeft);
+  
+  // Now set the position and make it visible
+  translationPopup.style.top = `${position.top}px`;
+  translationPopup.style.left = `${position.left}px`;
   translationPopup.style.display = 'block';
-  translationPopup.style.top = translationIcon.style.top;
-  translationPopup.style.left = translationIcon.style.left;
 
   setPopupTitle('Translation', `
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
@@ -204,6 +275,8 @@ function showTranslationPopup(text, sourceLang = 'auto', targetLang = 'en') {
   showPopupSection('gpe-loading');
   translationPopup.querySelector('.gpe-loading span').textContent = 'Translating...';
 
+  // Add to history
+  addHistoryEntryCS('Translate', text);
 
   translateText(text, sourceLang, targetLang).then(translation => {
     showPopupSection('gpe-loading', 'none');
@@ -235,9 +308,17 @@ function searchWeb(text, engine = 'google') {
 }
 
 function defineText(text) {
+  // Get raw position from the translation icon
+  const rawTop = parseInt(translationIcon.style.top, 10);
+  const rawLeft = parseInt(translationIcon.style.left, 10);
+  
+  // Calculate the constrained position without making popup visible yet
+  const position = clampPopupPosition(translationPopup, rawTop, rawLeft);
+  
+  // Now set the position and make it visible
+  translationPopup.style.top = `${position.top}px`;
+  translationPopup.style.left = `${position.left}px`;
   translationPopup.style.display = 'block';
-  translationPopup.style.top = translationIcon.style.top;
-  translationPopup.style.left = translationIcon.style.left;
 
   setPopupTitle('Definition', `
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
@@ -249,6 +330,8 @@ function defineText(text) {
   showPopupSection('gpe-loading');
   translationPopup.querySelector('.gpe-loading span').textContent = 'Defining...';
 
+  // Add to history
+  addHistoryEntryCS('Define', text);
 
   chrome.runtime.sendMessage({
     action: 'callAPI',
@@ -262,11 +345,18 @@ function defineText(text) {
     showPopupSection('gpe-loading', 'none');
     showPopupSection('gpe-result');
 
-    if (response && response.success) {
-      translationPopup.querySelector('.gpe-result').textContent = response.data.response;
-    } else {
-      translationPopup.querySelector('.gpe-result').textContent = `Error: ${response?.error || 'Definition failed'}`;
-    }
+if (response && response.success) {
+  if (typeof marked !== 'undefined') {
+    // Use marked to parse the Markdown response into HTML
+    translationPopup.querySelector('.gpe-result').innerHTML = marked.parse(response.data.response);
+  } else {
+    // Fallback if marked is not available
+    translationPopup.querySelector('.gpe-result').textContent = response.data.response;
+    console.warn('Marked library not found. Displaying raw text for definition.');
+  }
+} else {
+  translationPopup.querySelector('.gpe-result').textContent = `Error: ${response?.error || 'Definition failed'}`;
+}
   });
 }
 
@@ -284,13 +374,13 @@ function showFeedbackToast(message) {
   toast.style.left = '50%';
   toast.style.transform = 'translateX(-50%)';
   toast.style.padding = '10px 20px';
-  toast.style.backgroundColor = 'var(--primary-color)';
-  toast.style.color = 'white';
+  // Use a variable expected to be defined within the theme scope
+  toast.style.backgroundColor = 'var(--gpe-accent-color, #007bff)'; // Added fallback color
+  toast.style.color = 'var(--gpe-text-color-on-accent, white)'; // Added text color variable
   toast.style.borderRadius = '4px';
-  toast.style.zIndex = '10002';
+  toast.style.zIndex = '10002'; // Ensure it's above the popup
   toast.style.opacity = '0';
   toast.style.transition = 'opacity 0.3s ease';
-
   document.body.appendChild(toast);
 
   // Force reflow
@@ -304,9 +394,10 @@ function showFeedbackToast(message) {
     toast.style.opacity = '0';
     setTimeout(() => {
       toast.remove();
-    }, 300);
+    }, 300); // Match transition duration
   }, 3000);
 }
+
 function toggleNewTabOverride() {
   chrome.storage.sync.get(['newTabEnabled'], function(data) {
     const isEnabled = !data.newTabEnabled;
@@ -341,9 +432,17 @@ function hideAllPopupSections() {
 }
 
 function showAskAIPanel(selectedText) {
+  // Get raw position from the translation icon
+  const rawTop = parseInt(translationIcon.style.top, 10);
+  const rawLeft = parseInt(translationIcon.style.left, 10);
+
+  // Calculate the constrained position without making popup visible yet
+  const position = clampPopupPosition(translationPopup, rawTop, rawLeft);
+
+  // Now set the position and make it visible
+  translationPopup.style.top = `${position.top}px`;
+  translationPopup.style.left = `${position.left}px`;
   translationPopup.style.display = 'block';
-  translationPopup.style.top = translationIcon.style.top;
-  translationPopup.style.left = translationIcon.style.left;
 
   setPopupTitle('Ask AI', `
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
@@ -381,6 +480,9 @@ function showAskAIPanel(selectedText) {
     showPopupSection('gpe-loading'); // Show loading below input
     loadingElement.querySelector('span').textContent = 'Thinking...';
 
+    // Add to history (Context + Question)
+    const historyText = `Context: "${selectedText}" | Question: "${question}"`;
+    addHistoryEntryCS('Ask AI', historyText);
 
     chrome.runtime.sendMessage({
       action: 'callAPI',
@@ -410,3 +512,4 @@ function showAskAIPanel(selectedText) {
     });
   });
 }
+

@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const actionCards = document.querySelectorAll('.action-card');
   const translateOptions = document.getElementById('translateOptions');
   const searchOptions = document.getElementById('searchOptions');
-  //const swapLanguages = document.getElementById('swapLanguages');
   const translationForm = document.getElementById('translationForm');
   const sourceText = document.getElementById('sourceText');
   const translationResult = document.getElementById('translationResult');
@@ -14,34 +13,107 @@ document.addEventListener('DOMContentLoaded', function() {
   const targetLanguage = document.getElementById('targetLanguage');
   const translationModal = document.getElementById('translationModal');
   const closeButton = translationModal.querySelector('.close-button');
+  const historyList = document.getElementById('historyList');
 
-function initTheme() {
-  const themeToggle = document.getElementById('themeToggle');
+  // ======== History Management ========
+  const MAX_HISTORY_ITEMS = 10;
+  const HISTORY_STORAGE_KEY = 'requestHistory';
 
-  if (!themeToggle) {
-    console.error('Theme toggle button not found');
-    return;
+  async function addHistoryEntry(action, text) {
+    try {
+      const result = await chrome.storage.local.get([HISTORY_STORAGE_KEY]);
+      let history = result[HISTORY_STORAGE_KEY] || [];
+      
+      // Add new entry to the beginning
+      history.unshift({ action, text, timestamp: new Date().toISOString() });
+      
+      // Keep only the last MAX_HISTORY_ITEMS entries
+      if (history.length > MAX_HISTORY_ITEMS) {
+        history = history.slice(0, MAX_HISTORY_ITEMS);
+      }
+      
+      await chrome.storage.local.set({ [HISTORY_STORAGE_KEY]: history });
+      // Update display if popup is open
+      if (historyList) {
+          displayHistory();
+      }
+    } catch (error) {
+      console.error("Error adding history entry:", error);
+    }
   }
 
-  // Get saved theme or use system preference as fallback
-  const savedTheme = localStorage.getItem('theme') ||
-                     (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  async function displayHistory() {
+      if (!historyList) return; // Only run if the history list element exists
 
-  // Apply theme to HTML element
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  console.log('Initial theme set to:', savedTheme);
+      try {
+          const result = await chrome.storage.local.get([HISTORY_STORAGE_KEY]);
+          const history = result[HISTORY_STORAGE_KEY] || [];
 
-  // Add click event listener
-  themeToggle.addEventListener('click', function() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          historyList.innerHTML = ''; // Clear current list
 
-    // Apply new theme
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    console.log('Theme changed to:', newTheme);
-  });
-}
+          if (history.length === 0) {
+              const li = document.createElement('li');
+              li.textContent = 'No history yet.';
+              li.style.fontStyle = 'italic';
+              historyList.appendChild(li);
+              return;
+          }
+
+          history.forEach(item => {
+              const li = document.createElement('li');
+              const actionSpan = document.createElement('span');
+              actionSpan.className = 'history-action';
+              actionSpan.textContent = `[${item.action}]`;
+              
+              const textSpan = document.createElement('span');
+              textSpan.className = 'history-text';
+              // Truncate long text for display
+              textSpan.textContent = item.text.length > 50 ? item.text.substring(0, 47) + '...' : item.text;
+              textSpan.title = item.text; // Show full text on hover
+
+              const timeSpan = document.createElement('span');
+              timeSpan.className = 'history-time';
+              timeSpan.textContent = new Date(item.timestamp).toLocaleString();
+
+
+              li.appendChild(actionSpan);
+              li.appendChild(textSpan);
+              // li.appendChild(timeSpan); // Optional: Show timestamp
+              historyList.appendChild(li);
+          });
+      } catch (error) {
+          console.error("Error displaying history:", error);
+          historyList.innerHTML = '<li>Error loading history.</li>';
+      }
+  }
+
+  function initTheme() {
+    const themeToggle = document.getElementById('themeToggle');
+
+    if (!themeToggle) {
+      console.error('Theme toggle button not found');
+      return;
+    }
+
+    // Get saved theme or use system preference as fallback
+    const savedTheme = localStorage.getItem('theme') ||
+                       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+    // Apply theme to HTML element
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    console.log('Initial theme set to:', savedTheme);
+
+    // Add click event listener
+    themeToggle.addEventListener('click', function() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+      // Apply new theme
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      console.log('Theme changed to:', newTheme);
+    });
+  }
 
   // ======== Function Selection ========
   function initFunctionSelection() {
@@ -105,11 +177,6 @@ function initTheme() {
       }
     });
 
-    // Setup language swap
-    //swapLanguages.addEventListener('click', function() {
-    //  [sourceLanguage.value, targetLanguage.value] = [targetLanguage.value, sourceLanguage.value];
-    //});
-
     // Handle form submission
     translationForm.addEventListener('submit', function(event) {
       event.preventDefault();
@@ -120,6 +187,9 @@ function initTheme() {
       translationResult.style.display = 'block';
       loadingPlaceholder.style.display = 'block';
       actualResponse.style.display = 'none';
+
+      // Add to history
+      addHistoryEntry('Translate', text);
 
       translateText(text, sourceLanguage.value, targetLanguage.value)
         .then(translation => {
@@ -136,31 +206,31 @@ function initTheme() {
     });
   }
 
-async function translateText(text, sourceLang = 'auto', targetLang = 'en') {
-  try {
-    const response = await fetch('https://server.gpeclub.com:1000/api/chatgpt', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: text,
-        model: 'deepseek-chat',
-        prompt1: `You are a translation assistant. Translate the following text from ${sourceLang} to ${targetLang}. Only return the translated text, no explanations.`
-      })
-    });
+  async function translateText(text, sourceLang = 'auto', targetLang = 'en') {
+    try {
+      const response = await fetch('https://server.gpeclub.com:1000/api/chatgpt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: text,
+          model: 'deepseek-chat',
+          prompt1: `You are a translation assistant. Translate the following text from ${sourceLang} to ${targetLang}. Only return the translated text, no explanations.`
+        })
+      });
 
-    if (!response.ok) {
-      throw new Error(`Server responded with ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.response;
+    } catch (error) {
+      console.error('Translation error:', error);
+      throw new Error('Failed to translate text');
     }
-
-    const data = await response.json();
-    return data.response;
-  } catch (error) {
-    console.error('Translation error:', error);
-    throw new Error('Failed to translate text');
   }
-}
 
   // ======== Modal Management ========
   function showModal(modalId) {
@@ -192,41 +262,42 @@ async function translateText(text, sourceLang = 'auto', targetLang = 'en') {
     setTimeout(() => feedback.remove(), 2000);
   }
 
+  function initAutoSave() {
+    // Get all select elements that need auto-saving
+    const sourceLanguage = document.getElementById('sourceLanguage');
+    const targetLanguage = document.getElementById('targetLanguage');
+    const searchEngine = document.getElementById('searchEngine');
 
-function initAutoSave() {
-  // Get all select elements that need auto-saving
-  const sourceLanguage = document.getElementById('sourceLanguage');
-  const targetLanguage = document.getElementById('targetLanguage');
-  const searchEngine = document.getElementById('searchEngine');
+    // Load saved values
+    chrome.storage.sync.get(['sourceLanguage', 'targetLanguage', 'searchEngine'], function(data) {
+      if (data.sourceLanguage) sourceLanguage.value = data.sourceLanguage;
+      if (data.targetLanguage) targetLanguage.value = data.targetLanguage;
+      if (data.searchEngine) searchEngine.value = data.searchEngine;
+    });
 
-  // Load saved values
-  chrome.storage.sync.get(['sourceLanguage', 'targetLanguage', 'searchEngine'], function(data) {
-    if (data.sourceLanguage) sourceLanguage.value = data.sourceLanguage;
-    if (data.targetLanguage) targetLanguage.value = data.targetLanguage;
-    if (data.searchEngine) searchEngine.value = data.searchEngine;
-  });
+    // Add change event listeners
+    sourceLanguage.addEventListener('change', function() {
+      chrome.storage.sync.set({'sourceLanguage': this.value});
+    });
 
-  // Add change event listeners
-  sourceLanguage.addEventListener('change', function() {
-    chrome.storage.sync.set({'sourceLanguage': this.value});
-  });
+    targetLanguage.addEventListener('change', function() {
+      chrome.storage.sync.set({'targetLanguage': this.value});
+    });
 
-  targetLanguage.addEventListener('change', function() {
-    chrome.storage.sync.set({'targetLanguage': this.value});
-  });
-
-  searchEngine.addEventListener('change', function() {
-    chrome.storage.sync.set({'searchEngine': this.value});
-  });
-}
+    searchEngine.addEventListener('change', function() {
+      chrome.storage.sync.set({'searchEngine': this.value});
+    });
+  }
 
   initTheme();
   initFunctionSelection();
   initTranslation();
   initAutoSave();
   initializeNewTabToggle();
+  displayHistory();
 
 });
+
 function initializeNewTabToggle() {
   chrome.storage.sync.get(['newTabEnabled'], function(data) {
     const newtabToggle = document.getElementById('newtabToggle');
@@ -239,6 +310,7 @@ function initializeNewTabToggle() {
     }
   });
 }
+
 function toggleNewTabOverride() {
   chrome.storage.sync.get(['newTabEnabled'], function(data) {
     const isEnabled = !data.newTabEnabled;
@@ -248,16 +320,15 @@ function toggleNewTabOverride() {
 
       if (isEnabled) {
         newtabToggle.classList.add('active');
-        //showFeedbackToast('Custom new tab page enabled');
         showFeedbackToast('Custom new tab switch not available yet');
       } else {
         newtabToggle.classList.remove('active');
-        //showFeedbackToast('Custom new tab page disabled');
         showFeedbackToast('Custom new tab switch not available yet');
       }
     });
   });
 }
+
 function showFeedbackToast(message) {
   const toast = document.createElement('div');
   toast.className = 'feedback-toast';
